@@ -84,7 +84,13 @@ body {
 .drop-zone .drop-hint {
   color: var(--text-dim);
   font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+.drop-zone .drop-hint:last-of-type {
   margin-bottom: 1.25rem;
+}
+.drop-zone .drop-hint strong {
+  color: var(--text);
 }
 .drop-zone input[type="file"] {
   display: none;
