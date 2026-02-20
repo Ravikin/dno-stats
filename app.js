@@ -33,9 +33,11 @@ function initUpload() {
 
 function handleFiles(files) {
   hideError();
+  console.log('[upload] Received files:', files.map(f => `${f.name} (${(f.size / 1024).toFixed(1)} KB)`));
 
   // Single JSON file -> existing JSON flow
   if (files.length === 1 && files[0].name.endsWith('.json')) {
+    console.log('[upload] Routing to JSON handler');
     handleJsonFile(files[0]);
     return;
   }
@@ -45,9 +47,11 @@ function handleFiles(files) {
     const datFile = files.find(f => f.name.endsWith('.dat'));
     const saveFile = files.find(f => !f.name.endsWith('.dat') && !f.name.endsWith('.json'));
     if (datFile && saveFile) {
+      console.log('[upload] Routing to save file handler:', saveFile.name, '+', datFile.name);
       handleSaveFiles(saveFile, datFile);
       return;
     }
+    console.warn('[upload] Two files but no valid save+dat pair. datFile:', datFile?.name, 'saveFile:', saveFile?.name);
   }
 
   // Single non-JSON file without .dat companion

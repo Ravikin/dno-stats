@@ -194,8 +194,18 @@ function extractHeader(datData) {
     'specialHeaderValue', 'customMapName', 'completedCampaignLinks',
   ];
   let cdef = findClassDefinition(datData, 'ProfileSaveHeader', expected);
-  if (!cdef) cdef = findClassDefinition(datData, 'UI.ProfileSaveHeader', expected);
-  if (!cdef) return null;
+  if (!cdef) {
+    console.log('[header] ProfileSaveHeader not found, trying UI.ProfileSaveHeader');
+    cdef = findClassDefinition(datData, 'UI.ProfileSaveHeader', expected);
+  }
+  if (!cdef) {
+    console.warn('[header] ProfileSaveHeader not found in .dat file');
+    return null;
+  }
+  console.log('[header] Found class definition:', {
+    className: cdef.className, dataOffset: cdef.dataOffset, objectId: cdef.objectId,
+    memberNames: cdef.memberNames, typeTags: cdef.typeTags, primTypes: cdef.primTypes,
+  });
 
   const dv = new DataView(datData.buffer, datData.byteOffset, datData.byteLength);
   let offset = cdef.dataOffset;
@@ -203,20 +213,24 @@ function extractHeader(datData) {
   const missionId = dv.getInt32(offset, true); offset += 4;
   const difficultyId = dv.getInt32(offset, true);
 
-  return {
+  const result = {
     saveVersion,
     missionId,
-    missionIdName: null, // no mission map in browser
+    missionIdName: null,
     difficultyId,
     difficultyName: DIFFICULTY_NAMES[difficultyId] || `Unknown(${difficultyId})`,
   };
+  console.log('[header] Parsed:', result);
+  return result;
 }
 
 function extractKilledEnemies(data) {
   const cdef = findClassDefinition(data, 'KilledEnemiesCounterSingleton', ['value']);
-  if (!cdef) return null;
+  if (!cdef) { console.warn('[enemies] KilledEnemiesCounterSingleton not found'); return null; }
   const dv = new DataView(data.buffer, data.byteOffset, data.byteLength);
-  return dv.getInt32(cdef.dataOffset, true);
+  const value = dv.getInt32(cdef.dataOffset, true);
+  console.log('[enemies] Killed:', value);
+  return value;
 }
 
 function extractSessionTime(data) {
@@ -225,7 +239,7 @@ function extractSessionTime(data) {
     'previousFrameElapsedTime', 'timeSpeed', 'lastTimeSpeed', 'dirty',
   ];
   const cdef = findClassDefinition(data, 'CurrentSessionTimeSingleton', expected);
-  if (!cdef) return null;
+  if (!cdef) { console.warn('[time] CurrentSessionTimeSingleton not found'); return null; }
 
   const dv = new DataView(data.buffer, data.byteOffset, data.byteLength);
   let offset = cdef.dataOffset;
@@ -233,12 +247,14 @@ function extractSessionTime(data) {
   const elapsedTime = dv.getFloat32(offset, true); offset += 4;
   const elapsedTimeUnscaled = dv.getFloat32(offset, true);
 
-  return {
+  const result = {
     gameSeconds: Math.round(elapsedTime * 10) / 10,
     realSeconds: Math.round(elapsedTimeUnscaled * 10) / 10,
     gameFormatted: formatDuration(elapsedTime),
     realFormatted: formatDuration(elapsedTimeUnscaled),
   };
+  console.log('[time] Session:', result);
+  return result;
 }
 
 function extractResources(data) {
@@ -248,12 +264,12 @@ function extractResources(data) {
     'woodConsuming', 'ironConsuming',
   ];
   const cdef = findClassDefinition(data, 'ResourcesStatisticContainer', expected);
-  if (!cdef) return null;
+  if (!cdef) { console.warn('[resources] ResourcesStatisticContainer not found'); return null; }
+  console.log('[resources] Found at offset', cdef.dataOffset, 'objectId:', cdef.objectId);
 
   const dv = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const result = {};
 
-  // Current day
   let offset = cdef.dataOffset;
   const currentDay = {};
   for (const name of expected) {
@@ -261,8 +277,8 @@ function extractResources(data) {
     offset += 4;
   }
   result.currentDay = currentDay;
+  console.log('[resources] currentDay:', currentDay);
 
-  // Last day via ClassWithId back-reference
   if (cdef.objectId !== 0) {
     const cidOffset = findClassIdInstance(data, cdef.objectId, offset);
     if (cidOffset !== null) {
@@ -273,6 +289,9 @@ function extractResources(data) {
         off2 += 4;
       }
       result.lastDay = lastDay;
+      console.log('[resources] lastDay:', lastDay);
+    } else {
+      console.warn('[resources] ClassWithId for lastDay not found (objectId:', cdef.objectId, ')');
     }
   }
 
@@ -320,25 +339,26 @@ function extractAchievements(data) {
     'marketPartsDestroyed', 'trainedUnitTypes',
   ];
   const cdef = findClassDefinition(data, 'AchievementsSaveData', expected);
-  if (!cdef) return null;
+  if (!cdef) { console.warn('[achievements] AchievementsSaveData not found'); return null; }
 
   let offset = cdef.dataOffset;
   const result = {};
   for (let i = 0; i < expected.length; i++) {
     const tag = cdef.typeTags[i];
-    if (tag !== TAG_PRIMITIVE) break; // stop at non-primitive (trainedUnitTypes)
+    if (tag !== TAG_PRIMITIVE) break;
     const prim = cdef.primTypes[i];
     const r = readPrimitive(data, offset, prim);
     result[expected[i]] = r.value;
     offset = r.offset;
   }
+  console.log('[achievements] Parsed:', result);
   return result;
 }
 
 function extractWaves(data) {
   const expected = ['referenceId', 'waveId', 'mapped', 'fullySpawned', 'waveDestroyed', 'major'];
   const cdef = findClassDefinition(data, 'WaveHolderSaveData', expected);
-  if (!cdef) return null;
+  if (!cdef) { console.log('[waves] No WaveHolderSaveData found (may be normal for early saves)'); return null; }
 
   const waves = [];
 
@@ -394,6 +414,10 @@ function formatDuration(seconds) {
 // ─── Main Entry Point ────────────────────────────────────────────────────────
 
 async function parseSaveFiles(saveFile, datFile) {
+  console.group('[dno-parser] Parsing save files');
+  console.log('Save file:', saveFile.name, `(${(saveFile.size / 1024).toFixed(1)} KB)`);
+  console.log('Dat file:', datFile.name, `(${(datFile.size / 1024).toFixed(1)} KB)`);
+
   const [saveBuffer, datBuffer] = await Promise.all([
     saveFile.arrayBuffer(),
     datFile.arrayBuffer(),
@@ -406,13 +430,13 @@ async function parseSaveFiles(saveFile, datFile) {
   let header = null, enemiesKilled = null, sessionTime = null;
   let resources = null, undeadResources = null, achievements = null, waves = null;
 
-  try { header = extractHeader(datData); } catch (e) { errors.push('header: ' + e.message); }
-  try { enemiesKilled = extractKilledEnemies(saveData); } catch (e) { errors.push('enemiesKilled: ' + e.message); }
-  try { sessionTime = extractSessionTime(saveData); } catch (e) { errors.push('sessionTime: ' + e.message); }
-  try { resources = extractResources(saveData); } catch (e) { errors.push('resources: ' + e.message); }
-  try { undeadResources = extractUndeadResources(saveData); } catch (e) { errors.push('undeadResources: ' + e.message); }
-  try { achievements = extractAchievements(saveData); } catch (e) { errors.push('achievements: ' + e.message); }
-  try { waves = extractWaves(saveData); } catch (e) { errors.push('waves: ' + e.message); }
+  try { header = extractHeader(datData); } catch (e) { console.error('[header] Exception:', e); errors.push('header: ' + e.message); }
+  try { enemiesKilled = extractKilledEnemies(saveData); } catch (e) { console.error('[enemies] Exception:', e); errors.push('enemiesKilled: ' + e.message); }
+  try { sessionTime = extractSessionTime(saveData); } catch (e) { console.error('[time] Exception:', e); errors.push('sessionTime: ' + e.message); }
+  try { resources = extractResources(saveData); } catch (e) { console.error('[resources] Exception:', e); errors.push('resources: ' + e.message); }
+  try { undeadResources = extractUndeadResources(saveData); } catch (e) { console.error('[undead] Exception:', e); errors.push('undeadResources: ' + e.message); }
+  try { achievements = extractAchievements(saveData); } catch (e) { console.error('[achievements] Exception:', e); errors.push('achievements: ' + e.message); }
+  try { waves = extractWaves(saveData); } catch (e) { console.error('[waves] Exception:', e); errors.push('waves: ' + e.message); }
 
   const statistics = {};
   if (enemiesKilled !== null) statistics.enemiesKilled = enemiesKilled;
@@ -430,6 +454,10 @@ async function parseSaveFiles(saveFile, datFile) {
   };
   if (header) saveEntry.header = header;
   if (errors.length) saveEntry.errors = errors;
+
+  if (errors.length) console.warn('[dno-parser] Extraction errors:', errors);
+  console.log('[dno-parser] Final save entry:', JSON.parse(JSON.stringify(saveEntry)));
+  console.groupEnd();
 
   return {
     extractorVersion: 'browser-1.0',
