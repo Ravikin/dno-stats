@@ -6,6 +6,19 @@
 
 const DIFFICULTY_NAMES = { 0: 'Easy', 1: 'Normal', 2: 'Hard', 3: 'Brutal', 4: 'Impossible' };
 
+// Known campaign mission ID -> name mapping (built from dno_stats.py --build-mission-map)
+const MISSION_NAMES = {
+  '-1': "Let's learn",
+  '0': 'Wake-up call',
+  '1': 'Between rock and a hard place',
+  '2': 'Children of the revolution',
+  '-726675576': 'Ambush',
+  '-619759290': 'Assimilation process',
+  '-1686517888': 'How do we get to the Cutthroat Castle',
+  '-900579389': 'The Fleet of the Resistance',
+  '669943558': "The Rebel's Thorny Path",
+};
+
 // BinaryFormatter type tags
 const TAG_PRIMITIVE = 0;
 const TAG_STRING = 1;
@@ -216,7 +229,7 @@ function extractHeader(datData) {
   const result = {
     saveVersion,
     missionId,
-    missionIdName: null,
+    missionIdName: MISSION_NAMES[String(missionId)] || null,
     difficultyId,
     difficultyName: DIFFICULTY_NAMES[difficultyId] || `Unknown(${difficultyId})`,
   };
