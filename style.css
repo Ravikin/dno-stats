@@ -296,11 +296,12 @@ body {
   font-weight: 600;
   margin-left: 0.5rem;
 }
-.diff-Easy { background: #1a3a1a; color: #4ade80; }
-.diff-Normal { background: #1a2a3a; color: #60a5fa; }
-.diff-Hard { background: #3a2a1a; color: #fbbf24; }
-.diff-Brutal { background: #3a1a1a; color: #f87171; }
-.diff-Impossible { background: #2a1a3a; color: #c084fc; }
+.diff-0 { background: #1a3a1a; color: #4ade80; }
+.diff-1 { background: #1a2a3a; color: #60a5fa; }
+.diff-2 { background: #3a2a1a; color: #fbbf24; }
+.diff-3 { background: #3a1a1a; color: #f87171; }
+.diff-4 { background: #2a1a3a; color: #c084fc; }
+.diff-5 { background: #1a0a0a; color: #ff4444; }
 
 /* Campaign progress */
 .mission-table {

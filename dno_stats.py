@@ -25,7 +25,14 @@ log = logging.getLogger("dno_stats")
 
 # ─── Constants & ID Mapping Tables ────────────────────────────────────────────
 
-DIFFICULTY_NAMES = {0: "Easy", 1: "Normal", 2: "Hard", 3: "Brutal", 4: "Impossible"}
+DIFFICULTY_NAMES = {
+    0: "Easy-Peasy Lemon Squeezy",
+    1: "Almost a Walk in the Park",
+    2: "Challenge Accepted",
+    3: "Ultra-Hardcore",
+    4: "Pure Insanity",
+    5: "Your Worst Nightmare",
+}
 MISSION_TYPES = {0: "None", 1: "Campaign", 2: "Endless", 3: "Tutorial", 4: "Block", 5: "Sandbox", 6: "CustomMap"}
 FACTIONS = {0: "Default", 1: "Undead"}
 

@@ -4,7 +4,14 @@
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const DIFFICULTY_NAMES = { 0: 'Easy', 1: 'Normal', 2: 'Hard', 3: 'Brutal', 4: 'Impossible' };
+const DIFFICULTY_NAMES = {
+  0: 'Easy-Peasy Lemon Squeezy',
+  1: 'Almost a Walk in the Park',
+  2: 'Challenge Accepted',
+  3: 'Ultra-Hardcore',
+  4: 'Pure Insanity',
+  5: 'Your Worst Nightmare',
+};
 
 // Known campaign mission ID -> name mapping (built from dno_stats.py --build-mission-map)
 const MISSION_NAMES = {

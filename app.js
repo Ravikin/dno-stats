@@ -137,7 +137,7 @@ function buildSampleData() {
           filePath: 'Sample/tutorial',
           fileSize: 1500000,
           lastModified: new Date().toISOString(),
-          header: { saveVersion: 14, missionId: -1, missionIdName: "Let's learn", difficultyId: 0, difficultyName: 'Easy' },
+          header: { saveVersion: 14, missionId: -1, missionIdName: "Let's learn", difficultyId: 0, difficultyName: 'Easy-Peasy Lemon Squeezy' },
           statistics: {
             enemiesKilled: 42,
             sessionTime: { gameSeconds: 900, realSeconds: 1020, gameFormatted: '0:15:00', realFormatted: '0:17:00' },
@@ -153,7 +153,7 @@ function buildSampleData() {
           filePath: 'Sample/wakeup',
           fileSize: 2200000,
           lastModified: new Date().toISOString(),
-          header: { saveVersion: 14, missionId: 0, missionIdName: 'Wake-up call', difficultyId: 1, difficultyName: 'Normal' },
+          header: { saveVersion: 14, missionId: 0, missionIdName: 'Wake-up call', difficultyId: 1, difficultyName: 'Almost a Walk in the Park' },
           statistics: {
             enemiesKilled: 310,
             sessionTime: { gameSeconds: 2400, realSeconds: 2700, gameFormatted: '0:40:00', realFormatted: '0:45:00' },
@@ -216,7 +216,14 @@ function renderReport(stats) {
 
   const profile = stats.profiles[0];
   const allSaves = profile.saves;
-  const diffNames = { 0: 'Easy', 1: 'Normal', 2: 'Hard', 3: 'Brutal', 4: 'Impossible' };
+  const diffNames = {
+    0: 'Easy-Peasy Lemon Squeezy',
+    1: 'Almost a Walk in the Park',
+    2: 'Challenge Accepted',
+    3: 'Ultra-Hardcore',
+    4: 'Pure Insanity',
+    5: 'Your Worst Nightmare',
+  };
   const palette = ['#c9873b', '#3bc977', '#3b8ec9', '#e84393', '#9b59b6', '#1abc9c', '#e67e22', '#c94040'];
   const resourceFields = [
     { key: 'foodByFarms', label: 'Farms', color: '#27ae60' },
@@ -322,7 +329,7 @@ function renderReport(stats) {
 
   // ─── Per-mission sections ──────────────────────────────────────────
   missions.forEach((m, mi) => {
-    const diffClass = m.difficulty ? `diff-${m.difficulty}` : '';
+    const diffClass = m.difficultyId >= 0 ? `diff-${m.difficultyId}` : '';
     const diffBadge = m.difficulty ? `<span class="difficulty-badge ${diffClass}">${m.difficulty}</span>` : '';
     const slug = `mission_${mi}`;
     const gameplaySaves = m.saves.filter(s => (s.statistics?.sessionTime?.gameSeconds || 0) > 10);
@@ -479,9 +486,9 @@ function renderReport(stats) {
     const diffs = completed
       ? (completed.difficultyIndexes || []).map(d => {
           const dn = diffNames[d] || `?${d}`;
-          return `<span class="difficulty-badge diff-${dn}">${dn}</span>`;
+          return `<span class="difficulty-badge diff-${d}">${dn}</span>`;
         }).join(' ')
-      : `<span class="difficulty-badge diff-${m.difficulty}">${m.difficulty}</span>`;
+      : `<span class="difficulty-badge diff-${m.difficultyId}">${m.difficulty}</span>`;
     const status = completed
       ? '<span style="color: #3bc977">Completed</span>'
       : (m.hasGameplay ? '<span style="color: #fbbf24">In Progress</span>' : '<span style="color: var(--text-dim)">Started</span>');
