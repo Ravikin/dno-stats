@@ -452,7 +452,15 @@ async function parseSaveFiles(saveFile, datFile) {
     lastModified: new Date(saveFile.lastModified).toISOString(),
     statistics,
   };
-  if (header) saveEntry.header = header;
+  if (header) {
+    // Use save file name as mission name since we lack a mission map
+    if (!header.missionIdName) {
+      header.missionIdName = saveFile.name
+        .replace(/, mission start$/i, '')
+        .replace(/, faction choice$/i, '');
+    }
+    saveEntry.header = header;
+  }
   if (errors.length) saveEntry.errors = errors;
 
   if (errors.length) console.warn('[dno-parser] Extraction errors:', errors);
